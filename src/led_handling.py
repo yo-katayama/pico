@@ -11,3 +11,12 @@ def blink_led_for_seconds(seconds):
     time.sleep(seconds)
     led.value = False
 
+def blink_led():
+    led = digitalio.DigitalInOut(board.LED)
+    led.direction = digitalio.Direction.OUTPUT
+    led.value = True
+
+def turn_off_led():
+    led = digitalio.DigitalInOut(board.LED)
+    led.direction = digitalio.Direction.OUTPUT
+    led.value = False
