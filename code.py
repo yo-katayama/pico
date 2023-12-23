@@ -1,35 +1,11 @@
-import wifi
-import socketpool
-import ipaddress
 import json
-from adafruit_httpserver import Server, Request, Response
 import time
-
-def load_env(filename=".env"):
-    env_vars = {}
-    try:
-        with open(filename, "r") as file:
-            for line in file:
-                if "=" in line:
-                    key, value = line.strip().split("=", 1)
-                    env_vars[key] = value
-    except OSError:
-        pass  # ファイルが存在しない場合のエラーハンドリング
-    return env_vars
-
-# .envファイルから環境変数を読み込む
-env_vars = load_env()
-ssid = env_vars.get("WIFI_SSID")
-password = env_vars.get("WIFI_PASSWORD")
+from adafruit_httpserver import Server, Request, Response
+from src.connect_wifi import connect_wifi
+from src.led_handling import blink_led
 
 # Wifiに接続する
-wifi.radio.connect(ssid, password)
-pool = socketpool.SocketPool(wifi.radio)  # Wi-Fi接続上でソケットを管理するためのオブジェクトを作成
-print("Your IP is: %s" % (wifi.radio.ipv4_address))
-
-# 外部インターネットアクセスが出来ることを確認する
-external_ip = ipaddress.ip_address("8.8.8.8")
-print("Internet reached with %sms round trip" % wifi.radio.ping(external_ip))
+wifi, pool = connect_wifi()
 
 # サーバー起動時にPicoWのルートディレクトリからデータを提供できるようにする
 server = Server(pool, "/static", debug=True)
@@ -51,4 +27,5 @@ def base(request: Request):
 
 # Start the HTTP server
 print("Starting web server")
+blink_led()
 server.serve_forever(str(wifi.radio.ipv4_address))
