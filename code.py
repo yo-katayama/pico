@@ -1,5 +1,6 @@
 import json
-import time
+import adafruit_ntp
+import socketpool
 from adafruit_bitmap_font import bitmap_font
 from adafruit_display_text import label
 from adafruit_httpserver import Server, Request, Response
@@ -9,6 +10,10 @@ from src.use_display import set_display, set_text_group
 
 # Wifiに接続する
 wifi, pool = connect_wifi()
+
+# ntpを用いて現在時刻を取得
+pool = socketpool.SocketPool(wifi.radio)
+ntp = adafruit_ntp.NTP(pool, tz_offset=9)
 
 # サーバー起動時にPicoWのルートディレクトリからデータを提供できるようにする
 server = Server(pool, "/static", debug=True)
@@ -22,7 +27,7 @@ font_data = bitmap_font.load_font('/fonts/tuffy16.bdf')
 
 # 現在の日付を返す関数
 def get_current_date():
-    now = time.localtime()  # 現在のローカル時刻を取得
+    now = ntp.datetime
     return {"date": f"{now.tm_year}{now.tm_mon:02d}{now.tm_mday:02d}",
             "time": f"{now.tm_hour:02d}{now.tm_min:02d}{now.tm_sec:02d}"}
 
