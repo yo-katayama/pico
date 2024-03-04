@@ -7,6 +7,7 @@ from adafruit_httpserver import Server, Request, Response
 from src.connect_wifi import connect_wifi
 from src.led_handling import blink_led
 from src.use_display import set_display, set_text_group
+from src.servo_controller import set_servo_motor, reset_servo_motor
 
 # Wifiに接続する
 wifi, pool = connect_wifi()
@@ -25,19 +26,10 @@ text_group = set_text_group()
 #フォント読み込み
 font_data = bitmap_font.load_font('/fonts/tuffy16.bdf')
 
-import time
-import board
-import pwmio
-from adafruit_motor import servo
-
-# PWMピンの設定 (例: GPIO 16を使用)
-pwm_pin = pwmio.PWMOut(board.GP0, frequency=50)
-
-# サーボモータオブジェクトの作成
-servo_motor = servo.Servo(pwm_pin, min_pulse=500, max_pulse=2500)
-
-# サーボモータの現在の角度を格納する変数
+# サーボモータの初期化
 current_servo_angle = 0
+reset_servo_motor()
+servo_motor = set_servo_motor()
 
 # 状態を返す関数
 def get_current_data():

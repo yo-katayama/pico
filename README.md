@@ -20,12 +20,10 @@ pip install huga_package
 
 # Usage
 
-DEMOの実行方法など、"hoge"の基本的な使い方を説明する
+サーボモータを動かすコマンド例
 
 ```bash
-git clone https://github.com/hoge/~
-cd examples
-python demo.py
+curl -X POST -H "Content-Type: application/json" -d '{"angle": 20}' http://172.20.10.6/servo
 ```
 
 # Note
