@@ -25,32 +25,63 @@ text_group = set_text_group()
 #フォント読み込み
 font_data = bitmap_font.load_font('/fonts/tuffy16.bdf')
 
-# 現在の日付を返す関数
-def get_current_date():
+import time
+import board
+import pwmio
+from adafruit_motor import servo
+
+# PWMピンの設定 (例: GPIO 16を使用)
+pwm_pin = pwmio.PWMOut(board.GP0, frequency=50)
+
+# サーボモータオブジェクトの作成
+servo_motor = servo.Servo(pwm_pin, min_pulse=500, max_pulse=2500)
+
+# サーボモータの現在の角度を格納する変数
+current_servo_angle = 0
+
+# 状態を返す関数
+def get_current_data():
     now = ntp.datetime
     return {"date": f"{now.tm_year}{now.tm_mon:02d}{now.tm_mday:02d}",
-            "time": f"{now.tm_hour:02d}{now.tm_min:02d}{now.tm_sec:02d}"}
+            "time": f"{now.tm_hour:02d}{now.tm_min:02d}{now.tm_sec:02d}",
+            "angle": f"{str(current_servo_angle)}"}
 
 # ルートにアクセスした際に実行される関数
 @server.route("/")
 def base(request: Request):
-    # 現在の日付データを取得
-    date_data = get_current_date()
+    data = get_current_data()
 
     # text_groupを新しく初期化して以前の表示内容をクリア
     text_group = set_text_group()
 
     # モニタ表示
-    text_area = label.Label(font_data, text=date_data["date"], x=5, y=15)
+    text_area = label.Label(font_data, text=data["date"], x=5, y=15)
     text_group.append(text_area)
-    text_area = label.Label(font_data, text=date_data["time"], x=5, y=45)
+    text_area = label.Label(font_data, text=data["time"], x=5, y=30)
+    text_group.append(text_area)
+    text_area = label.Label(font_data, text=data["angle"], x=5, y=45)
     text_group.append(text_area)
     display.show(text_group)
 
     # 辞書をJSON文字列に変換
-    json_data = json.dumps(date_data)
+    json_data = json.dumps(data)
     # JSON文字列をResponseに渡す
     return Response(request, json_data, content_type="application/json")
+
+@server.route("/servo", methods=["POST"])
+def set_servo_angle(request: Request):
+    global current_servo_angle
+    try:
+        # リクエストから角度を取得
+        data = json.loads(request.body)
+        angle = data["angle"]
+        # 角度をサーボモータに設定
+        servo_motor.angle = angle
+        current_servo_angle = angle
+        return Response(request, json.dumps({"status": "OK", "angle": angle}), content_type="application/json")
+    except Exception as e:
+        return Response(request, json.dumps({"status": "error", "message": str(e)}), content_type="application/json")
+
 
 # Start the HTTP server
 print("Starting web server")
